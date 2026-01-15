@@ -1,0 +1,160 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: prodaric-postgres
+    environment:
+      POSTGRES_DB: prodaric
+      POSTGRES_USER: prodaric
+      POSTGRES_PASSWORD: prodaric_dev_password
+      POSTGRES_MULTIPLE_DATABASES: prodaric_lease,prodaric_invest,prodaric_market,prodaric_manage,prodaric_analytics
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./tools/scripts/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
+    networks:
+      - prodaric-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prodaric"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: prodaric-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - prodaric-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Prodaric Core API
+  prodaric-api:
+    build:
+      context: .
+      dockerfile: src/Core/Prodaric.Core.API/Dockerfile
+      target: development
+    container_name: prodaric-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=prodaric;Username=prodaric;Password=prodaric_dev_password
+      - ConnectionStrings__LeaseConnection=Host=postgres;Port=5432;Database=prodaric_lease;Username=prodaric;Password=prodaric_dev_password
+      - ConnectionStrings__InvestConnection=Host=postgres;Port=5432;Database=prodaric_invest;Username=prodaric;Password=prodaric_dev_password
+      - ConnectionStrings__MarketConnection=Host=postgres;Port=5432;Database=prodaric_market;Username=prodaric;Password=prodaric_dev_password
+      - ConnectionStrings__ManageConnection=Host=postgres;Port=5432;Database=prodaric_manage;Username=prodaric;Password=prodaric_dev_password
+      - ConnectionStrings__AnalyticsConnection=Host=postgres;Port=5432;Database=prodaric_analytics;Username=prodaric;Password=prodaric_dev_password
+      - Redis__Configuration=redis:6379
+      - Jwt__Secret=prodaric_super_secret_key_for_development_only_change_in_production
+      - Jwt__Issuer=Prodaric
+      - Jwt__Audience=ProdaricClients
+      - Jwt__ExpirationMinutes=60
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./src:/app/src
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - prodaric-network
+    restart: unless-stopped
+
+  # Prodaric Web Client
+  prodaric-web:
+    build:
+      context: .
+      dockerfile: src/Web/Prodaric.Web.Client/Dockerfile
+      target: development
+    container_name: prodaric-web
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:5000/api
+      - VITE_WS_URL=ws://localhost:5000/hub
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src/Web/Prodaric.Web.Client:/app
+      - /app/node_modules
+    depends_on:
+      - prodaric-api
+    networks:
+      - prodaric-network
+    restart: unless-stopped
+
+  # Prodaric Admin Panel
+  prodaric-admin:
+    build:
+      context: .
+      dockerfile: src/Web/Prodaric.Web.Admin/Dockerfile
+      target: development
+    container_name: prodaric-admin
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:5000/api
+      - VITE_WS_URL=ws://localhost:5000/hub
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./src/Web/Prodaric.Web.Admin:/app
+      - /app/node_modules
+    depends_on:
+      - prodaric-api
+    networks:
+      - prodaric-network
+    restart: unless-stopped
+
+  # pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: prodaric-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@prodaric.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - prodaric-network
+    restart: unless-stopped
+
+  # Redis Commander for cache management
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: prodaric-redis-commander
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - prodaric-network
+    restart: unless-stopped
+
+networks:
+  prodaric-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
+  pgadmin-data:

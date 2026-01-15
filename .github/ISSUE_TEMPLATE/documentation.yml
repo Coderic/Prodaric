@@ -1,0 +1,96 @@
+name: Documentation Improvement
+description: Suggest improvements or report issues with documentation
+title: "[Docs]: "
+labels: ["documentation", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping us improve our documentation!
+
+  - type: dropdown
+    id: doc-type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation needs improvement?
+      options:
+        - API Documentation
+        - Architecture Documentation
+        - Contribution Guide
+        - Getting Started Guide
+        - User Guide
+        - README
+        - Code Comments
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue Type
+      description: What kind of documentation issue is this?
+      options:
+        - Missing Information
+        - Incorrect Information
+        - Unclear/Confusing
+        - Outdated
+        - Typo/Grammar
+        - Code Example Needed
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: location
+    attributes:
+      label: Documentation Location
+      description: Where is the documentation that needs improvement?
+      placeholder: |
+        - File: docs/architecture/ARCHITECTURE.md
+        - Section: "Database Architecture"
+        - Line: 123
+        - URL: https://github.com/prodaric/Prodaric/blob/main/docs/...
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's Wrong?
+      description: Describe what's wrong or missing with the current documentation
+      placeholder: A clear description of the documentation issue
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested Improvement
+      description: How should the documentation be improved?
+      placeholder: A clear description of what should be added, changed, or clarified
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context or screenshots about the documentation issue here.
+
+  - type: checkboxes
+    id: implementation
+    attributes:
+      label: Implementation
+      description: Are you willing to contribute to improving this documentation?
+      options:
+        - label: I would be willing to submit a PR to improve this documentation
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/prodaric/Prodaric/discussions
+    about: Ask questions, share ideas, and discuss with the community
+  - name: 💡 Roadmap
+    url: https://github.com/prodaric/Prodaric/blob/main/ROADMAP.md
+    about: View our public roadmap and vote on features
+  - name: 📚 Documentation
+    url: https://github.com/prodaric/Prodaric/blob/main/docs/ARCHITECTURE.md
+    about: Read our comprehensive documentation
+  - name: 🔒 Security Issue
+    url: https://github.com/prodaric/Prodaric/security/advisories/new
+    about: Report a security vulnerability privately
